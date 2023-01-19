@@ -1,0 +1,14 @@
+snippet age_pyramid
+
+	tab = data %>% select(age,gender) 
+	
+	ggplot(data = tab, aes(x=factor(age),fill=gender))+
+	geom_bar(data=subset(tab, tab$gender=="F"), position = "identity")+
+	geom_bar(data=subset(tab, tab$gender=="M"), aes(y=after_stat(count)*(-1)))+
+	scale_y_continuous(breaks=seq(-1000,1000,50))+ 
+	coord_flip()+
+	labs(title = "Age pyramid",
+	fill = "Gender",
+	y = "Age",
+	x = "Count")}
+	
