@@ -601,12 +601,51 @@ snippet save-ggplot-to-pptx
 
 	# ~ Open the pptx file ------------------------------------------------------
 	browseURL(path_to_pptx_file)
+
 snippet help-plots
 	${0}# Satatistical plots
 	# NOTE: Required packages must be installed!!!
 
 	# 3D scatterplot
 	plotly-3d-scatter
+	
+	# Plotmeans GGplot
+	ggplotmeans
+	
+	# Age pyramid with ggplot
+	ggage_pyramid
+
+
+snippet ggage_pyramid
+	$tab = data %>% select(age,gender) 
+	
+	ggplot(data = tab, aes(x=factor(age),fill=gender))+
+	geom_bar(data=subset(tab, tab$gender=="F"), position = "identity")+
+	geom_bar(data=subset(tab, tab$gender=="M"), aes(y=after_stat(count)*(-1)))+
+	scale_y_continuous(breaks=seq(-1000,1000,50))+ 
+	coord_flip()+
+	labs(title = "Age pyramid",
+	fill = "Gender",
+	y = "Age",
+	x = "Count")}
+	
+snippet ggplotmeans
+	$%>% 
+	group_by() %>% 
+	summarise(
+		group = ,
+		n = n(), 
+		mean = mean(, na.rm = T), 
+		sd = sd(, na.rm = T), 
+		se = sd/sqrt(n), 
+		ci = se*qt(.95/2 + .5, n-1)	
+		)
+	ggplot(aes(x=group, y=mean_value, colour=))+
+		geom_errorbar(aes(ymin=mean_value-se, ymax=mean_value+se), width=.1) +
+		geom_line() +
+		geom_point() + 
+		geom_text(aes(label = n))+
+		labs()
 
 
 snippet plotly-3d-scatter
