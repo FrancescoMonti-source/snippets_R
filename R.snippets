@@ -617,7 +617,7 @@ snippet help-plots
 
 
 snippet ggage_pyramid
-	$tab = data %>% select(age,gender) 
+	tab = data %>% select(age,gender) 
 	
 	ggplot(data = tab, aes(x=factor(age),fill=gender))+
 	geom_bar(data=subset(tab, tab$gender=="F"), position = "identity")+
@@ -630,7 +630,7 @@ snippet ggage_pyramid
 	x = "Count")}
 	
 snippet ggplotmeans
-	$%>% 
+	%>% 
 	group_by() %>% 
 	summarise(
 		group = ,
