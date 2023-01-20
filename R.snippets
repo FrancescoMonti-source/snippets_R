@@ -1,234 +1,442 @@
-snippet age_pyramid
 
-	tab = data %>% select(age,gender) 
-	
-	ggplot(data = tab, aes(x=factor(age),fill=gender))+
-	geom_bar(data=subset(tab, tab$gender=="F"), position = "identity")+
-	geom_bar(data=subset(tab, tab$gender=="M"), aes(y=after_stat(count)*(-1)))+
-	scale_y_continuous(breaks=seq(-1000,1000,50))+ 
-	coord_flip()+
-	labs(title = "Age pyramid",
-	fill = "Gender",
-	y = "Age",
-	x = "Count")}
-	
-snippet plotmeans
-	%>% 
-	group_by() %>% 
-	summarise(
-		group = ,
-		n = n(), 
-		mean = mean(, na.rm = T), 
-		sd = sd(, na.rm = T), 
-		se = sd/sqrt(n), 
-		ci = se*qt(.95/2 + .5, n-1)	
-		)
-	ggplot(aes(x=group, y=mean_value, colour=))+
-		geom_errorbar(aes(ymin=mean_value-se, ymax=mean_value+se), width=.1) +
-		geom_line() +
-		geom_point() + 
-		geom_text(aes(label = n))+
-		labs()
-		
-		
 snippet help
-	${0}<!-- Help/Documentation snippets -->
-	help
-
-	<!-- R Markdown related snippets -->
-	help-rmd
-	help-bookdown
-	help-yaml
-	help-yaml-html
-	help-symbols
-
-	<!-- Documentation about functions, operators or some other topic -->
+	# START: keywords for help/documentation snippets ==========================~
+	# Help about functions, operators or other topics:
 	?
-	??
+	# Snippets for basic R code :
+	help-r
+	# Abbreviations of the most common R data types:
+	help-data-types
+	# Functions for plots:
+	help-plots
+	# Functions for statistical analyses:
+	help-analysis
+	# Symbols (mathematical, Greek, etc.)
+	help-symbols
+	# Comparison of different R syntax to achieve the same goals:
 	compare-r-syntax
+	# END: keywords for help/documentation snippets   ==========================~
 
-	<!-- END: Help snippets -->
+snippet ?
+	help(${1:"${2:function name, operator, other topic}"${3:, package = "${4:package-name}"}${5:, try.all.packages = ${6:TRUE}}})
+snippet help-analysis
+	${0}# Snippets for various analyses
+	# NOTE: Required packages must be installed!!!
 
-# R Markdown syntax: Bookdown extensions -------------------------------------
-snippet help-bookdown
-	${0}<!-- START: Snippets for Bookdown projects/files -->
-	<!--
-	Abbreviations:
-	1. cap -- caption
-	2. ref -- reference
+	# Principal component analysis, PCA
+	a-pca
 
-	3. eq         -- equation
-	4. exm        -- example
-	5. exr        -- exercise
-	6. fig, f     -- figure
-	7. t          -- table
-	8. youtube, v -- video
+	# Principal cordinate analysis, PCoA (classical multidimensional scaling, cMDS)
+	a-pcoa
 
-	E.g., "reff" means reference (ref) for figure (f);
-	      "reft" means reference (ref) for table (t).
-	-->
+	# Non-metric multidimensional scaling (nMDS)
+	a-nmds
 
-	<!-- Insert objects -->
-	eq
-	exm
-	exr
-	fig
-	youtube
-	youtube-css
+snippet a-pca
+	`r if (!"factoextra" %in% .packages()) "library(factoextra)\n\n"`
+	${1:pca_model} <- prcomp(${2:data}, scale = TRUE)
 
-	<!-- Insert captions -->
-	cap
-	capeq
-	capf
-	capt
-	capv
+	get_eigenvalue(${1:pca_model}) %>% round(1)
+	fviz_screeplot(${1:pca_model}, addlabels = TRUE, ncp = 10)
 
-	<!-- Insert references -->
-	ref
-	refeq
-	refexr
-	refexm
-	reff
-	reft
-	refv
+	fviz_pca_ind(${1:pca_model}, labels = FALSE, alpha.ind = 0.5${3:, habillage = ${2:data}${4:\$factor}})
 
-	<!-- Prefix snippets: after the hyphen use a word (text) without spaces -->
-	ref-
-	     ref-eq
-	     ref-fig
+	fviz_pca_biplot(${1:pca_model}, label = "var", alpha.ind = 0.5${3:, habillage = ${2:data}${4:\$factor})
 
-	 cap-
-	     cap-eq
-	     cap-fig
+	fviz_pca_var(${1:pca_model}, repel = TRUE)
 
-	<!-- END: Snippets for Bookdown projects/files -->
+	ggpubr::ggarrange(
+	  fviz_contrib(${1:pca_model}, "var", axes = 1),
+	  fviz_contrib(${1:pca_model}, "var", axes = 2),
+	  fviz_contrib(${1:pca_model}, "var", axes = 3)
+	)
 
-snippet eq
-	<!-- Equation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  -->
-	\begin{equation}
+	get_pca_ind(${1:pca_model})
+	get_pca_var(${1:pca_model})
+	${0}
 
-	  ${0:equation}
-	  (\#eq:${1:equation-ID})
 
-	\end{equation}
-	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  -->
+snippet a-pcoa
+	`r if (!"factoextra" %in% .packages()) "library(factoextra)\n\n"`
 
-snippet youtube-css
-	<style>
-	/* Make resizeable YouTube video ------------------------------------------- */
+	# Create distance matrix
+	d <-
+	  ${1:data} |>
+	  dplyr::select(${2}) |>
+	  scale() |>
+	  dist(method = "${3:euclidean}")
 
-	.iframe-container{
-	  position: relative;
-	  width: 100%;
-	  padding-bottom: 56.25%;
-	  height: 0;
+	# Plot distance matrix
+	factoextra::fviz_dist(d, show_labels = FALSE)
+
+	# Main PCoA
+	pcoa_obj <- cmdscale(d, k = ${4:2}, eig = TRUE)
+
+
+	# Screeplot: eigenvalues
+	ind <- 1:10
+	qplot(factor(ind), pcoa_obj\$eig[ind], xlab = "Dimension", ylab = "Eigenvalue")
+
+	# Screeplot: percentages
+	rel_eig_1 <- pcoa_obj\$eig[ind]/sum(abs(pcoa_obj$eig))                # Absolute
+	rel_eig_2 <- pcoa_obj\$eig[ind]/sum(pcoa_obj$eig[pcoa_obj$eig > 0])   # Positive
+
+	ggplot2::qplot(
+	  x = factor(ind), y = rel_eig_1[ind] * 100, color = I("red"),
+	  xlab = "Dimension", ylab = "Eigenvalue, % (absolute)"
+	)
+
+	ggplot2::qplot(
+	  x = factor(ind), y = rel_eig_2[ind] * 100, color = I("blue"),
+	  xlab = "Dimension", ylab = "Eigenvalue, % (positive)"
+	)
+
+	# Goodnes of fit (GOF)
+	pcoa_obj\$GOF
+
+	# Coordinates in MDS space
+	pcoa_coord <- as.data.frame(pcoa_obj\$points)
+	pcoa_coord %>% head()
+
+	# Plot MDS map (MDS configuration map) with ggplot2
+	ggplot(pcoa_coord, aes(V1, V2)) +
+	  geom_point(alpha = 0.5)
+
+	# Plot MDS map in colors
+	pcoa_coord %>%
+	  bind_cols(${1:data}) %>%
+	  ggplot(aes(V1, V2, color = ${5:variable})) +
+	  geom_point(alpha = 0.5)
+	${0}
+
+snippet a-nmds
+	# Create distance matrix
+	d <-
+	  ${1:data} |>
+	  dplyr::select(${2}) |>
+	  scale() |>
+	  dist(method = "${3:euclidean}")
+
+	# Plot distance matrix
+	factoextra::fviz_dist(d, show_labels = FALSE)
+
+	# Main NMDS
+	mds_obj <- vegan::metaMDS(d, k = ${4:2})
+
+	# Main info about the results
+	mds_obj
+
+	# STRESS value
+	mds_obj\$stress
+
+	# Shepard diagram
+	vegan::stressplot(mds_obj, d)
+
+	# MDS coordinates
+	mds_coord <- as.data.frame(mds_obj\$points)
+	head(mds_coord)
+
+	# Plot MDS map (MDS configuration map)
+	plot(mds_obj)
+
+	# Plot MDS map with ggplot2
+	ggplot(mds_coord, aes(MDS1, MDS2)) +
+	  geom_point(alpha = 0.5)
+
+	mds_coord %>%
+	  bind_cols(${1:data}) %>%
+	  ggplot(aes(MDS1, MDS2, color = ${5:variable})) +
+	  geom_point(alpha = 0.5)
+	${0}
+# R code snippets: code elements
+snippet help-r
+	# R code snippets -----------------------------------------------------------
+	# library(), require(), source()
+	lib
+	req
+	src
+
+	# matrix()
+	mat
+
+	# S4 objects
+	sg
+	sm
+	sc
+
+	# if, else, else if, switch
+	if
+	el
+	ei
+	switch
+
+	# Function, annonymous function, return
+	fun
+	funn
+	ret
+
+	# Loops
+	for
+	while
+
+	# The apply family functions
+	apply
+	lapply
+	sapply
+	mapply
+	tappy
+	vappy
+	rapply
+
+	# purrr::map()
+	map
+	map_
+
+	# Operator %>%
+	pipe
+	aa
+	aa-
+
+	# R locales
+	locale
+	locale-en
+	locale-lt
+
+snippet lib
+	library(${0:package})
+
+snippet req
+	require(${0:package})
+
+snippet src
+	source("${0:file.R}", encoding = "UTF-8")
+
+snippet mat
+	matrix(${1:data}, nrow = ${2:rows}, ncol = ${3:cols})
+
+snippet sg
+	setGeneric("${1:generic}", function(${2:x, ...}) {
+		standardGeneric("${1:generic}")
+	})
+
+snippet sm
+	setMethod("${1:generic}", ${2:class}, function(${2:x, ...}) {
+		${0}
+	})
+
+snippet sc
+	setClass("${1:Class}", slots = c(${2:name = "type"}))
+
+snippet if
+	if (${1:condition}) {
+		${0}
 	}
-	.iframe-container iframe{
-	  position: absolute;
-	  top:0;
-	  left: 0;
-	  width: 100%;
-	  height: 100%;
+
+snippet el
+	else {
+		${0}
 	}
 
-	/* ------------------------------------------------------------------------- */
-	</style>
+snippet ei
+	else if (${1:condition}) {
+		${0}
+	}
 
-snippet youtube
-	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  -->
-	<br>
-	<center>
-	<!-- video -->
-	<div class="iframe-container">	<iframe width="640" height="360"
-	src="https://www.youtube${1:-nocookie}.com/embed/${2:youtube-code-of-vieo}?rel=0"
-	allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-	frameborder="0" allowfullscreen> </iframe> 	</div>
-	</center>
-	```{corollary, ${3:video-ID}}
-	${4:video-caption}
-	```
-	<br>
-	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  -->
+snippet fun
+	${1:name} <- function(${2:variables}) {
+		${0}
+	}
+
+snippet funn
+	function(${2:variables}) {
+		${0}
+	}
+
+snippet ret
+	return(${0:code})
+
+snippet for
+	for (${1:variable} in ${2:vector}) {
+		${0}
+	}
+
+snippet while
+	while (${1:condition}) {
+		${0}
+	}
+
+snippet switch
+	switch(
+		${1:object},
+		${2:case} = ${3:action}
+	)
+
+snippet apply
+	apply(${1:array}, ${2:margin}, ${3:...})
+
+snippet lapply
+	lapply(${1:list}, ${2:function})
+
+snippet sapply
+	sapply(${1:list}, ${2:function})
+
+snippet mapply
+	mapply(${1:function}, ${2:...})
+
+snippet tapply
+	tapply(${1:vector}, ${2:index}, ${3:function})
+
+snippet vapply
+	vapply(${1:list}, ${2:function}, FUN.VALUE = ${3:type}, ${4:...})
+
+snippet rapply
+	rapply(${1:list}, ${2:function})
+
+snippet map
+	${1:purrr::}map(${2:data}, ${3:function})
+
+snippet map_
+	${1:purrr::}map_${2:chr}(${3:data}, ${4:function})
 
 
-# Comments  ------------------------------------------------------------------
+snippet pipe-
+	$$ <-
+	  $$ %>%
+	  ${0:code}
+
+snippet pipe
+	${1:dataset} <-
+	  ${1} %>%
+	  ${0:code}
+
+snippet aa-
+	$$ <-
+	  $$ %>%
+	  ${0:code}
+
+snippet aa
+	${1:dataset} <-
+	  ${1} %>%
+	  ${0:code}
+
+snippet locale
+	Sys.${1:g}etlocale(${2})${0}
+
+snippet locale-en
+	Sys.setlocale(locale = "${3:`r if (.Platform$OS.type == "windows" && getRversion() < "4.2") "English" else "en_US.UTF-8"`}")${0}
+
+snippet locale-lt
+	Sys.setlocale(locale = "${3:`r if (.Platform$OS.type == "windows" && getRversion() < "4.2") "Lithuanian" else "lt_LT.UTF-8"`}")${0}
+
+
+snippet FIX
+	# FIXME: ${0}
+
+snippet fix
+	# FIXME: ${0}
+
+snippet TODO
+	# TODO: ${0}
+
+snippet todo
+	# TODO: ${0}
+
 snippet date
-	`r paste("<!--", Sys.Date(), "------------------------------ -->\n")`
+	`r paste("#", Sys.Date(), "------------------------------\n")`
 
 snippet time
-	`r paste("<!--", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "--------------------- -->\n")`
+	`r paste("#", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "---------------------\n")`
 
 snippet ts
 	`r paste(format(Sys.time(), "%Y-%m-%d %H:%M:%S"))`
-	
-# HTML code ------------------------------------------------------------------
-snippet kbd
-	<kbd>${0:Ctrl}</kbd>
 
-snippet style
-	<style>
-	${1}
-	</style>
+snippet msg
+	# =========================================================================
+	# ${0:Comment / Message / etc.}
+	# =========================================================================
+
+snippet help-data-types
+	# The abbreviations (used in the Tidyverse) of the most common R data types:
+	#     <fct>  -- nominal (factor, categorical);
+	#     <ord>  -- ordinal;
+	#     <int>  -- numeric (integers);
+	#     <dbl>  -- numeric (doubles, real numbers);
+	#     <lgl>  -- logical;
+	#     <chr>  -- text (character, strings);
+	#     <date> -- dates;
+	#     <dttm> -- dates and times;
+	#     <list> -- list column (more complex data structures than usual vectors).
+	#
+	#     Other data types are also possible.
+
+# FIXME: this part (options) must be carefully reviewed
+# Options --------------------------------------------------------------------
+snippet help-opts
+	opts-r-numbers
+	opts-pander
+	opts-desctools
+
+snippet opts-r-numbers
+	# Options to format numbers
+	options(        # For more detais see ?options
+	  scipen = 8,   # Show at least 8 digits in numbers before converting to exponential notation.
+		digits = `r getOption("digits", default = 7)`,   # Number of significant digits to print numbers.
+		OutDec = "`r getOption("OutDec", default = ".")`", # Default decimal separator to print numbers.
+		knitr.kable.NA = NA # Replacement for NA values in knitr::kable()
+	)
 	${0}
 
-# Non-breaking space
-snippet space
-	&${1:nbsp};${0}
-
-snippet nbsp
-	&${1:nbsp};${0}
-
-snippet font
-	<font color = "${1:red}">${0}</font>
-
-snippet details
-	<details>
-	<summary>${1:Description}</summary>
+snippet opts-kable
+	options(
+	  scipen = 8,
+	  digits = getOption("digits"),
+	  OutDec = "."
+	  knitr.kable.NA = "",
+	)
 	${0}
-	</details>
-	
-	
-# R Markdown syntax: chunks  --------------------------------------------------
-snippet setup
-	```{r setup, include=FALSE}
-	# Packages ------------------------------------------------------------------
-	${1}
-	library(conflicted)      # Get a warning/error if several functions with the same name exist.
-	library(tidyverse)       # The main "tidyverse" packages.
-	library(magrittr)        # Operator %>% and additional pipe-friendly functions.
-	# library(fs)            # Manage files and directories.
-	# library(data.table)    # Function `fread()` to read data from text files.
-	# library(readxl)        # Read Excel data.
-	# library(writexl)       # Write data to Excel files.
-	# library(openxlsx)      # Write data to Excel files.
-	# library(DescTools)     # Descriptive statistics, statistical tests, etc.
-	# library(gtsummary)     # Presentation-Ready Data Summary and Analytic Result Tables.
-	# library(summarytools)  # Descriptive statistics.
-	# library(ggpubr)        # Statistical plots and utilities for ggplot2.
-	# library(ggstatsplot)   # Statistical plots based on ggplot2.
-	# library(ggmosaic)      # Mosaic plot (ggplot2).
-	# library(qqplotr)       # Quantile comparison diagrams (QQ plots).
-	# library(ggtext)        # Improved Text Rendering Support for ggplot2.
-	# library(ggrepel)       # Labels for ggplot2 that do not overlap.
-	# library(patchwork)     # Join several ggplot2 plots into single figure.
-	# library(gghighlight)   # Highlight Lines and Points in ggplot2.
-	# library(latex2exp)     # LaTeX-based equations in plots.
-	# library(officer)       # Create and manipulate PowerPoint, Word, etc. documents.
-	# library(rvg)           # To save editable plots in PowerPoint.
-	# library(broom)         # Convert results of statistical analysis to data frames.
-	# library(rstatix)       # Pipe-friendly basic statistical tests.
-	# library(rcompanion)    # Statistical analysis.
-	# library(RVAideMemoire) # Statistical analysis.
-	# library(PMCMRplus)     # Non-parametric statistical tests.
-	# library(vcd)           # Analysis of categorical data.
-	# library(fitdistrplus)  # Fit parametric distributions.
-	# library(mlr)           # Machine learning in R.
-	# library(mlr3)          # Machine learning in R (new generation).
-	# library(factoextra)    # Extract and visualize the results of multivariate data analyses.
-	# library(userfriendlyscience) # Statistical analysis.
-	# library(pander)        # Function `pander()` to report results of statistical analysis.
-	# library(knitr)         # Function `kable()` to convert data frames into tables for reports.
-	# Settings ------------------------------------------------------------------
+
+snippet opts-pander
+	# Options for package "pander"
+	options(
+	  pander = modifyList(
+	    pander::panderOptions(),
+	    list(
+	      digits = getOption("digits", default = 4),
+	      round  = Inf,
+	      decimal.mark = getOption("OutDec", default = "."),
+	      big.mark = "",
+	      keep.trailing.zeros = TRUE,
+	      missing = getOption("knitr.kable.NA", default = NA),
+	      table.style = "multiline", # "multiline", "grid", "simple", "rmarkdown"
+	      table.split.table = 80,
+	      table.split.cells = 30,
+	      table.continues   = "Table continues below",
+	      table.continues.affix = "(continued below)",
+	      p.wrap   = "_",
+	      p.sep    = ", ",
+	      p.copula = " and ",
+	      knitr.auto.asis = TRUE
+	    ))
+	)
+	${0}
+
+snippet opts-desctools
+	# Options for package "DescTools"
+	options(scipen = 8)
+	DescToolsOptions(
+	  stamp  = ${1:NULL}, # stamp for figures
+	  digits = ${2:3},    # the number of fixed digits in printing
+		# abs – count (whole) numbers, num – real numbers, per – percentages
+	  fmt = list(
+	    abs = Fmt("abs", big.mark = "${3}"),
+	    num = Fmt("num", big.mark = "${3}", digits = ${4:3}),
+	    per = Fmt("per", big.mark = "${3}", digits = ${5:1})
+	  )
+	)
+	${0}
+
+snippet opts-chunk
+	# Chunk options
 	knitr::opts_chunk\$set(
 	  echo       = TRUE,    # Should blocks with program code be shown in knitted documents?
 	  eval       = TRUE,    # Should program code be evaluated?
@@ -236,20 +444,179 @@ snippet setup
 	  fig.width  = 5,       # Default width for plots.
 	  fig.align  = "center" # Default alignment for plots in knitted documents.
 	)
-	# Sys.setlocale(locale = "${3:`r if (.Platform$OS.type == "windows" && getRversion() < "4.2") "Lithuanian" else "lt_LT.UTF-8"`}")
-	theme_set(theme_bw()) # Default ggplot2 theme
-	options(        # For more detais see ?options
-	  scipen = 8,   # Show at least 8 digits in numbers before converting to exponential notation.
-		digits = `r getOption("digits", default = 7)`,   # Number of significant digits to print numbers.
-		OutDec = "`r getOption("OutDec", default = ".")`", # Default decimal separator to print numbers.
-		knitr.kable.NA = NA # Replacement for NA values in knitr::kable()
-	)
-	conflict_prefer("filter", "dplyr")
-	conflict_prefer("lag",    "dplyr")
 	${0}
-	set.seed(`r format(Sys.Date(), "%Y%m%d")`) # Initial condition for random processes.
-	```
-	
+# FIXME: this part (options) must be carefully reviewed
+# Options --------------------------------------------------------------------
+snippet help-lib
+	lib
+	lib-tidyverse
+	lib-tidyverse-3
+	lib-fs
+	lib-file-io
+	lib-ggplot2-extra
+	lib-stat-analysis
+	lib-md-tables
+
+snippet lib-tidyverse
+	library(tidyverse)     # The main "tidyverse" packages.
+	${0}
+
+snippet lib-tidyverse-3
+	library(conflicted)    # Get a warning/error if several functions with the same name exist.
+	library(magrittr)      # Operator %>% and additional pipe-friendly functions.
+	library(tidyverse)     # The main "tidyverse" packages.
+	${0}
+
+snippet lib-fs
+	library(fs)            # Manage files and directories.
+	${0}
+
+snippet lib-file-io
+	library(data.table)    # Function `fread()` to read data from text files.
+	library(readxl)        # Read Excel data.
+	library(writexl)       # Write data to Excel files.
+	library(openxlsx)      # Write data to Excel files.
+	${0}
+
+snippet lib-summary
+	library(DescTools)     # Descriptive statistics, statistical tests, etc.
+	library(gtsummary)     # Presentation-Ready Data Summary and Analytic Result Tables.
+	library(summarytools)  # Descriptive statistics.
+	${0}
+
+snippet lib-ggplot2-extra
+	library(ggpubr)        # Statistical plots and utilities for ggplot2.
+	library(ggstatsplot)   # Statistical plots based on ggplot2.
+	library(ggmosaic)      # Mosaic plot (ggplot2).
+	library(qqplotr)       # Quantile comparison diagrams (QQ plots).
+	library(ggtext)        # Improved Text Rendering Support for ggplot2.
+	library(ggrepel)       # Labels for ggplot2 that do not overlap.
+	library(patchwork)     # Join several ggplot2 plots into single figure.
+	library(gghighlight)   # Highlight Lines and Points in ggplot2.
+	library(latex2exp)     # LaTeX-based equations in plots.
+	library(officer)       # Create and manipulate PowerPoint, Word, etc. documents.
+	library(rvg)           # To save editable plots in PowerPoint.
+	${0}
+
+snippet lib-stat-analysis
+	library(broom)         # Convert results of statistical analysis to data frames.
+	library(rstatix)       # Pipe-friendly basic statistical tests.
+	library(rcompanion)    # Statistical analysis.
+	library(RVAideMemoire) # Statistical analysis.
+	library(PMCMRplus)     # Non-parametric statistical tests.
+	library(vcd)           # Analysis of categorical data.
+	library(fitdistrplus)  # Fit parametric distributions.
+	library(mlr)           # Machine learning in R.
+	library(mlr3)          # Machine learning in R (new generation).
+	library(factoextra)    # Extract and visualize the results of multivariate data analyses.
+	library(ufs)           # Statistical analysis.
+	${0}
+
+snippet lib-md-tables
+	library(pander)        # Function `pander()` to report results of statistical analysis.
+	library(knitr)         # Function `kable()` to convert data frames into tables for reports.
+	library(DT)            # Interactive tables for HTML documents (DataTables).
+	library(gt)            # Easily Create Presentation-Ready Display Tables.
+	library(flextable)     # Functions for Tabular Reporting.
+	${0}
+
+snippet save-plot-to-pptx
+	# ~ Load the packages  -------------------------------------------------------
+	library(tidyverse)
+	library(rvg)
+	library(officer)
+
+	# ~ Select a file name  ------------------------------------------------------
+	file <- "${1:PowerPoint-file-name-for-R-plot}.pptx"
+
+	if (file.exists(file)) {
+	  input_file <- output_file <- file
+	  if (suppressWarnings(!file.rename(from = file, to = file))) {
+	    stop("Please close this PowerPoint file: \n", file)
+	  }
+	} else {
+	  input_file  <- NULL
+	  output_file <- file
+	}
+
+	# ~ Create the instructions for creating vector graphics  --------------------
+	dml_plot <- dml(
+	  bg = NULL, pointsize = 12, editable = TRUE,
+	  code = {
+	    # The code of your plot, e.g.:
+	    ${2:barplot(1:5, col = 2:6)}
+	  }
+	)
+
+	location_on_slide <- ph_location(left = ${3:1}, top = ${4:1}, width = ${5:8}, height = ${6:5.5})
+
+	# ~ Save to PowerPoint -------------------------------------------------------
+	path_to_pptx_file <-
+	  read_pptx(input_file) %>%
+	  add_slide(layout = "Blank", master = "Office Theme") %>%
+	  ph_with(dml_plot, location = location_on_slide) %>%
+	  print(target = output_file)
+
+	# ~ Open the pptx file ------------------------------------------------------
+	browseURL(path_to_pptx_file)
+
+
+
+
+snippet save-ggplot-to-pptx
+	# ~ Load the packages  -------------------------------------------------------
+	library(tidyverse)
+	library(rvg)
+	library(officer)
+
+	# ~ Select a file name  ------------------------------------------------------
+	file <- "${1:PowerPoint-file-name-for-R-plot}.pptx"
+
+	if (file.exists(file)) {
+	  input_file <- output_file <- file
+	  if (suppressWarnings(!file.rename(from = file, to = file))) {
+	    stop("Please close this PowerPoint file: \n", file)
+	  }
+	} else {
+	  input_file  <- NULL
+	  output_file <- file
+	}
+
+	# ~ Create the instructions for creating vector graphics  --------------------
+	dml_plot <-
+	  dml(ggobj = ${2:gg_object_name},
+	  bg = NULL,
+	  pointsize = 12,
+	  editable = TRUE
+	)
+
+	location_on_slide <- ph_location(left = ${3:1}, top = ${4:1}, width = ${5:8}, height = ${6:5.5})
+
+	# ~ Save to PowerPoint -------------------------------------------------------
+	path_to_pptx_file <-
+	  read_pptx(input_file) %>%
+	  add_slide(layout = "Blank", master = "Office Theme") %>%
+	  ph_with(dml_plot, location = location_on_slide) %>%
+	  print(target = output_file)
+
+	# ~ Open the pptx file ------------------------------------------------------
+	browseURL(path_to_pptx_file)
+snippet help-plots
+	${0}# Satatistical plots
+	# NOTE: Required packages must be installed!!!
+
+	# 3D scatterplot
+	plotly-3d-scatter
+
+
+snippet plotly-3d-scatter
+	${1:data} |>
+	  plotly::plot_ly(
+	    x = ~${2:x}, y = ~${3:y}, z = ~${4:z}, ${5:color = ~${6:group}},
+	    marker = list(opacity = 0.8, size = 3)
+	  ) %>%
+	  plotly::add_markers() %>%
+	  plotly::layout(title = "${7:3D plot}")
 # Symbols --------------------------------------------------------------------
 
 snippet help-symbols
@@ -265,7 +632,6 @@ snippet help-symbols
 	permile     (‰)
 	deg         (°)
 	degree      (°)
-	inf         (∞)
 	infty       (∞)
 
 	# Superscript symbols
@@ -420,10 +786,6 @@ snippet deg
 # degree (°)
 snippet degree
 	`r "\u00B0"`
-
-# infinity (∞)
-snippet inf
-	`r "\u221e"`
 
 # infinity (∞)
 snippet infty
@@ -825,327 +1187,143 @@ snippet psi
 # Omega (ω)
 snippet omega
 	`r "\u03C9"`
+snippet compare-r-syntax
+	compare-r-syntax-1
+	compare-r-syntax-2
 
-# R Markdown syntax help  -----------------------------------------------------
-snippet help-rmd
-	${0}<!-- START: Markdown and R Markdown snippets -->
-	<!-- You have just inserted a snippet that contains keywords for other snippets -->
-
-	<!-- Help/Documentation snippets: -->
-	help
-	help-yaml
-	help-yaml-html
-	help-bookdown
-	compare-r-syntax
-	?
-	??
-
-	<!-- R code chunk snippets: -->
-	<!-- The same name for a chunk (e.g., "setup") can be used only once in the file. -->
-	setupo
-	setup
-	r
-	rr
-
-	<!-- Plots/Figures: -->
-	plot
-	plott
-	fig
-	figg
-	fig2
-
-	<!-- Tables: -->
-	kbl
-	pan
-
-	kable
-	pander
-
-	<!-- Other code chunk snippets: -->
-	py
-	rcpp
-	sql
-
-	<!-- Markdown snippets: -->
-	<!-- For lnk1, lnk2, etc., install package remotes::install_github("ropenscilabs/icon") -->
-	r-
-	rr-
-	[
-	![
-	lnk
-	lnk1
-	lnk2
-	lnk3
-
-	<!-- Prefix snippets: -->
-	<!--
-	     After "url-" use URL without spaces.
-	     For external URLs use http:// https:// ftps:// ftp:// etc.
-	-->
-
-	url-
-	     url-google.com/
-	     url-https://www.google.com/
-	     url-https://mokymai.github.io
-
-
-	<!-- HTML snippets: -->
-	style
-	font
-	kbd
-	space
-	nbsp
-
-	<!-- Other snippets: -->
-	date
-	time
-	ts
-	msg
-	fix
-	FIX
-	todo
-	TODO
-
-	<!-- END: Markdown and R Markdown snippets -->
-
-
-# R Markdown syntax: default  -------------------------------------------------
-snippet r-
-	`r "\u0060"`${1:r-code-to-display-as-is}`r "\u0060"`{.r}${0}
-
-snippet rr-
-	`r "\u0060"`r ${1:r-code-to-evaluate}`r "\u0060"`${0}
-
-snippet url-
-	[${0}]($$){target="_blank"}
-
-snippet lnk
-	[${1:label}](${2:location}){target="_blank"}
-
-snippet lnk1
-	[${1:label} `r "\u0060"`r icon::fa("external-link-alt")`r "\u0060"`](${2:location}){target="_blank"}
-
-snippet lnk2
-	[${1:label} `r "\u0060"`r icon::fa("download")`r "\u0060"`](${2:location}){target="_blank"}
-
-snippet lnk3
-	[${1:label} `r "\u0060"`r icon::fa("file-pdf-o")`r "\u0060"`](${2:location}){target="_blank"}
-
-snippet [
-	[${1:label}](${2:location})
-
-snippet ![
-	![${1:label}](${2:location})
-
-snippet plot
-	```{r ${1:fig-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}, echo=FALSE, fig.cap=caption}
-	# Caption/Description.
-	caption <- "${2:**Fig. ${3:1}.** }${4:Description}  "
-	${0:The code for your plot}
-	```
-
-snippet plott
-	```{r ${1:fig-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}, echo=FALSE, fig.cap=caption}
-	# Caption/Description.
-	caption <- "${2:Description}  "
-	${0:The code for your plot}
-	```
-
-snippet fig
-	```{r ${1:fig-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}, echo=FALSE, fig.cap=caption}
-	# Caption/Description.
-	caption <- "${2:**Fig. ${3:1}.** }${4:Description}  "
-	# Path or URL to the figure.
-	${5:knitr::include_graphics("${0}")}
-	```
-
-snippet figg
-	```{r ${1:fig-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}, echo=FALSE, fig.cap=caption}
-	# Caption/Description.
-	caption <- "${2:Description}  "
-	# Path or URL to the figure.
-	${3:knitr::include_graphics("${0}")}
-	```
-
-snippet fig2
-	```{r ${1:fig-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}, echo=FALSE, fig.cap=caption}
-	${6:# DELETE THIS: To quick-search for file/folder, put cursor between quotes ("|") and press TAB.}
-	${7:# DELETE THIS: If you chose a folder, press TAB again to continue the browsing.}
-	# Path or URL to the figure.
-	knitr::include_graphics("${0}")
-	# Caption/Description.
-	caption <- "${2:**Fig. ${3:1}.** }${4:Description}  "
-	${5:# DELETE THIS: It is recommended to leave at least two spaces before the closing quote.}
-	```
-
-# TODO: These are snippets to do.
-
-# Tables
-snippet kbl
-	```{r ${1:table-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}${2:, echo=${3:FALSE}}}
-	knitr::kable(${4:data}, caption = "${5:Table caption/description.}  ")
-	```
-
-snippet kable
-	```{r ${1:table-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}${2:, echo=${3:FALSE}}}
-	knitr::kable(
-	  ${4:data},
-	  format = "${4:pandoc}", # latex, html, markdown, pandoc, rst
-	  digits = ${5:`r getOption("digits")`},
-	  format.args = list(big.mark = "${6:,}", decimal.mark = "${7:.}", nsmall = ${8:0}),
-	  caption = "${9:Table caption/description.}  "
+snippet compare-r-syntax-1
+	# === Ways to select columns from a data frame ===============================
+	
+	library(tibble) # Tibble is an enhanced data frame.
+	
+	data <- tibble(
+		column   =   1:2,
+		column_a =  20:21,
+		column_b = 300:301,
+		column_c = 400:401
 	)
-	```
+	
+	some_function  <- function(...) print(paste(...))
+	
+	something_else <- c("A", "B", "C", "D")
+	
+	
+	# Operators $ and [[ ]]. -----------------------------------------------------
+	
+	data\$column       # For analysis
+	data[["column"]]   # For programming
+	
+	# Function with() ------------------------------------------------------------
+	
+	# Function with() allows using column names without $ and [[ ]] operators.
+	with(data, some_function(column))
+	with(data, some_function(column_a, column_b, column_c))
+	
+	# Instead of:
+	some_function(data\$column_a, data\$column_b, data\$column_c)
+	
+	
+	# Operators %>% and %$% ------------------------------------------------------
+	
+	library(tidyverse) # Loads %>% (pipe) operator.
+	library(magrittr)  # Loads %>% and %$% operators.
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	# By default, %>% inserts "data" as the first argument of "some_function".
+	some_function(data) 
+	
+	# is equivalent to
+	data %>% some_function() 
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	# If a dot (.) is present, %>% inserts "data" instead of the dot.
+	some_function(something_else, arg_2 = data) 
+	
+	# is equivalent to
+	data %>% some_function(something_else, arg_2 = .) 
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	# %$% inserts columns of "data" into "some_function".
+	some_function(data\$column) 
+	
+	# is equivalent to
+	data %$% some_function(column) 
+	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+	# %$% can insert any number of columns.
+	data %$% some_function(column_a, column_b, column_c) 
+	
+	# is equivalent to
+	some_function(data\$column_a, data\$column_b, data\$column_c) 
+	
+	# is equivalent to
+	with(data, some_function(column_a, column_b, column_c)) 
+	
+	# is equivalent to
+	data %>% with(some_function(column_a, column_b, column_c)) 
+	# ===========================================================================~
 
-snippet kable-eur
-	```{r ${1:table-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}${2:, echo=${3:FALSE}}}
-	knitr::kable(
-	  ${4:data},
-	  format = "${4:pandoc}", # latex, html, markdown, pandoc, rst
-	  digits = ${5:`r getOption("digits")`},
-	  format.args = list(big.mark = "${6: }", decimal.mark = "${7:,}", nsmall = ${8:0}),
-	  caption = "${9:Lenteles pavadinimas/aprasymas.}  "
-	)
-	```
-
-snippet pan
-	```{r ${1:table-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}${2:, echo=${3:FALSE}}}
-	pander::pander(${4:data}, caption = "${9:Table caption/description.}  ")
-	```
-
-snippet pander
-	```{r ${1:table-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}${2:, echo=${3:FALSE}}}
-	pander::pander(
-	  ${4:data},
-	  digits = ${5:`r getOption("digits")`},
-	  caption = "${6:Table caption/description.}  "
-	)
-	```
-
-# YAML options ---------------------------------------------------------------
-snippet help-yaml
-	<!-- YAML header snippets:  -->
-	<!--
-	When you insert these snippets, please, note if syntax highlighting is correct
-	(YAML keywords should be highlighted in a different color). If YAML syntax
-	highlighting is incorrect, it means that the code is in a wrong position:
-	YAML header must start at line 1 column 1 (no leading spaces or blank lines
-	should be present before/above the header). It's also recommended to install
-	the package "whoami" (Who am I?)
-
-	These snippets work only in R Markdown environment!
-
-	Available snippets for YAML headers:
-	-->
-	help-yaml-html
-
-	---1
-	---2a
-	---2
-	---html-1
-	---bib
-
-	<!-- END: YAML header snippets -->
-
-snippet help-yaml-html
-	<!--
-	In "html_document" and "bookdown::html_document2" you may use the options:
-
-	- Options for the main theme of a document ("theme"):
-	  default, cerulean, journal, flatly, readable, spacelab, united, cosmo,
-	  lumen, paper, sandstone, simplex, yeti.
-
-	- Options for code syntax highlighting theme ("highlight"):
-	  default, tango, pygments, kate, monochrome, espresso, zenburn, haddock,
-	  textmate.
-
-	- Code folding ("code_folding"): none, show, hide.
-
-	- Download code ("code_download"): yes, no
-
-	- Data frame print options ("df_print"): default, paged, kable, tibble.
-
-	- More explanations at:
-	  https://rmarkdown.rstudio.com/docs/reference/html_document.html
-	-->
-
-snippet ---html-1
-	---
-	title:    "${1:___}"
-	subtitle: "${2:}"
-	author:   "${3:`r whoami::fullname()`}"
-	date:     "${4:`r Sys.Date()`}"
-	output:
-	  html_document:
-	    number_sections: ${5:yes}
-	    toc:       ${6:yes}
-	    toc_float: ${7:yes}
-	    toc_depth: ${8:2}
-	---
-
-snippet ---1
-	---
-	title:    "${1:___}"
-	subtitle: "${2:}"
-	author:   "${3:`r whoami::fullname()`}"
-	date:     "${4:`r "\u0060"`r Sys.Date()`r "\u0060"`}" # Automatic date
-	output:
-	  html_document:
-	    fig_caption: ${5:yes}
-	    number_sections: ${6:yes}
-	    toc:       ${7:yes}
-	    toc_float: ${8:yes}
-	    toc_depth: ${9:3}
-	    df_print:  ${10:default} # paged kable tibble default
-	---
-
-snippet ---2a
-	---
-	title:    "${1:___}"
-	subtitle: "${2:}"
-	author:   "${3:`r whoami::fullname()`}"
-	date:     "${4:`r "\u0060"`r Sys.Date()`r "\u0060"`}" # Automatic date
-	output:
-	  bookdown::html_document2:
-	    fig_caption: ${5:yes}
-	    number_sections: ${6:yes}
-	    toc:       ${7:yes}
-	    toc_float: ${8:yes}
-	    toc_depth: ${9:3}
-	    df_print:  ${10:default} # paged kable tibble default
-	---
-
-snippet ---2
-	---
-	# General Information --------------------------------------------------------
-	title:    "${1:___}"
-	subtitle: "${2:}"
-	author:   "${3:`r whoami::fullname()`}"
-	date:     "${4:`r "\u0060"`r Sys.Date()`r "\u0060"`}" # Automatic date
-	# Document Format and Appearance ---------------------------------------------
-	output:
-	  bookdown::html_document2: # Enables automatic numbering of figures & tables
-	    highlight:       ${5:pygments} # default tango kate monochrome espresso ...
-	    code_folding:    ${6:none}     # none show hide
-			code_download:   ${7:yes}      # yes no
-	    number_sections: ${8:yes}      # Automatic numbering of sections: yes no
-	    toc:         ${9:yes}          # Table of contents (toc): yes no
-	    toc_float:   ${10:yes}          # yes no
-	    toc_depth:   ${11:3}            # 1 2 3 4 5
-	    fig_caption: ${12:yes}          # yes no
-	    theme:       ${13:default}      # cerulean journal flatly readable paper sandstone ...
-	    df_print:    ${14:default}      # paged kable tibble default
-	---
-
-snippet ---bib
-	---
-	# Bibliographies and Citations -----------------------------------------------
-	suppress-bibliography: ${1:no}
-	biblio-title: "${2:References}"
-	bibliography: "${3:path/to/bib-file.bib}" # Path to the file with bibliography entries.
-	csl: "${4:path/to/csl-file.csl}" # Path to the file with citation style (csl).
-	link-citations: ${5:yes}
-	# nocite: | # To include items in the bibliography without actually citing them.
-	#    @item1, @item2
-	---
+snippet compare-r-syntax-2
+	# === Examples ===============================================================
+	
+	library(tidyverse) # Loads %>% (pipe) operator.
+	library(magrittr)  # Loads %>% and %$% operators.
+	
+	# Each section will present different syntax that does the same operation.
+	
+	
+	# Functions that accept a vector as an input ---------------------------------
+	# Dataset:     CO2
+	# Column (y):  uptake
+	
+	mean(CO2\$uptake)
+	mean(CO2[["uptake"]])
+	with(CO2, mean(uptake))
+	CO2 %>% with(mean(uptake)) # Required packages: tidyverse or magrittr
+	CO2 %$% mean(uptake)       # Required packages: magrittr
+	
+	
+	# Functions that accept one-sided model formulas -----------------------------
+	# Dataset:     CO2
+	# Column (y):  Treatment 
+	# Column (y2): Type
+	
+	# Read ~ as "by"
+	# function(~ y, data = data)
+	
+	# %>% puts input instead of dot (.)
+	
+	xtabs(~ Type, data = CO2)
+	CO2 %>% xtabs(~ Type, data = .) # Required packages: tidyverse or magrittr
+	CO2 %$% xtabs(~ Type)           # Required packages: magrittr
+	
+	# function(~ y + y2, data = data)
+	
+	xtabs(~ Type + Treatment, data = CO2)
+	CO2 %>% xtabs(~ Type + Treatment, data = .) # Required packages: tidyverse or magrittr
+	CO2 %$% xtabs(~ Type + Treatment)           # Required packages: magrittr
+	
+	
+	# Functions that accept two-sided model formulas -----------------------------
+	# Dataset:     CO2
+	# Column (x):  Treatment 
+	# Column (y):  uptake
+	
+	# Note: first comes y, then x
+	# function(y ~ x, data = data)
+	
+	oneway.test(extra ~ group, data = sleep)
+	sleep %>% oneway.test(extra ~ group, data = .) # Required packages: tidyverse or magrittr
+	sleep %$% oneway.test(extra ~ group)           # Required packages: magrittr
+	
+	# Tidyverse style functions -------------------------------------------------
+	
+	# Tidyverse style functions that are designed for datasets manipulation,
+	# usually accepts dataset as their first argument and unquoted column names
+	# as some other arguments. This allows pipe (%>%) syntax.
+	
+	count(CO2, Type)     # Required packages: tidyverse
+	CO2 %>% count(Type)  # Required packages: tidyverse
+	
+	# ===========================================================================~
 
