@@ -470,9 +470,12 @@ snippet lib-nlp
 	library(Rweka)			# collection of machine learning algorithms for data mining tasks written in Java. 
 							# Package 'RWeka' contains the interface code, the Weka jar is in a separate package 'RWekajars'. 
 							# For more information on Weka see "https://www.cs.waikato.ac.nz/ml/weka"
-	library(Text2vec)		# Fast efficient package written in C++
-	library(TM)				#
-	library(wordcloud)		# 
+	library(text2vec)		# Fast efficient package written in C++
+	library(tm)				# maybe the best collection of tool for NLP with R
+	library(wordcloud)		#
+	library(stopwords)		# Provides stopwords for many languages
+	library(topicmodels)
+	library(sentimentr)
 
 snippet lib-tidyverse
 	library(tidyverse)     # The main "tidyverse" packages.
