@@ -459,6 +459,13 @@ snippet help-lib
 	lib-nlp
 
 snippet lib-nlp
+	library(tm)				
+	library(quanteda)
+	library(quanteda.textmodels)
+	library(quanteda.textstats)
+	library(quanteda.textplots)
+	library(readtext)		# provides readtext() very practical function to read files and pass them to corpus() with "quanteda"
+	
 	library(gutenbergr)		# gutenbergr library offers functions for downloading from and organizing the open-source Gutenberg corpus, home to over 60,000 books
 	library(koRpus) 		# a diverse collection of functions for automatic language detection. 
 							# It also includes indices of lexical diversity, such as type token ratio, MTLD
@@ -471,12 +478,11 @@ snippet lib-nlp
 							# Package 'RWeka' contains the interface code, the Weka jar is in a separate package 'RWekajars'. 
 							# For more information on Weka see "https://www.cs.waikato.ac.nz/ml/weka"
 	library(text2vec)		# Fast efficient package written in C++
-	library(tm)				# maybe the best collection of tool for NLP with R
 	library(wordcloud)		#
 	library(stopwords)		# Provides stopwords for many languages
 	library(topicmodels)
 	library(sentimentr)
-
+	
 snippet lib-tidyverse
 	library(tidyverse)     # The main "tidyverse" packages.
 	${0}
