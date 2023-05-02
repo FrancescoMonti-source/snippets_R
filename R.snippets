@@ -558,6 +558,7 @@ snippet lib-stat-analysis
 snippet lib-md-tables
 	library(pander)        # Function `pander()` to report results of statistical analysis.
 	library(knitr)         # Function `kable()` to convert data frames into tables for reports.
+	library(kableExtra)		# Enhancing kable() possibilities
 	library(DT)            # Interactive tables for HTML documents (DataTables).
 	library(gt)            # Easily Create Presentation-Ready Display Tables.
 	library(flextable)     # Functions for Tabular Reporting.
@@ -660,7 +661,7 @@ snippet help-plots
 	ggage_pyramid
 
 
-snippet ggage_pyramid
+snippet age_pyramid
 	tab = data %>% select(age,gender) 
 	
 	ggplot(data = tab, aes(x=factor(age),fill=gender))+
