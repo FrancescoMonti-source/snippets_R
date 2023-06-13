@@ -148,6 +148,7 @@ snippet a-nmds
 	  ggplot(aes(MDS1, MDS2, color = ${5:variable})) +
 	  geom_point(alpha = 0.5)
 	${0}
+
 # R code snippets: code elements
 snippet help-r
 	# R code snippets -----------------------------------------------------------
@@ -201,6 +202,9 @@ snippet help-r
 	locale
 	locale-en
 	locale-lt
+
+	# Tables
+	datatable
 
 snippet lib
 	library(${0:package})
@@ -298,6 +302,14 @@ snippet map
 snippet map_
 	${1:purrr::}map_${2:chr}(${3:data}, ${4:function})
 
+snippet datatable
+	datatable(options = list(
+		pageLength = 10,
+		scrollX = TRUE,
+		width = "auto",
+		scrollX = T
+							)
+			)
 
 snippet pipe-
 	$$ <-
