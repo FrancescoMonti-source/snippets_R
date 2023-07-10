@@ -665,11 +665,91 @@ snippet help-plots
 	# 3D scatterplot
 	plotly-3d-scatter
 	
+	# Set global ggplot theme
+	set_global_ggplot_theme
+	
 	# Plotmeans GGplot
 	ggplotmeans
 	
 	# Age pyramid with ggplot
 	ggage_pyramid
+
+snippet set_global_ggplot_theme
+	theme_set(
+	theme_base() %+replace%
+	theme(
+    # Main title
+    plot.title = element_text(),
+    # Subtitle, typically an explanatory note under the title
+    plot.subtitle = element_text(),
+    # Caption, typically source information, displayed at the bottom
+    plot.caption = element_text(),
+    # General text elements
+    title = element_text(),
+    # X and Y axis titles
+    axis.title.x = element_text(),
+    axis.title.y = element_text(),
+    # X and Y axis text (values)
+    axis.text.x = element_text(),
+    axis.text.y = element_text(),
+    # Axis ticks 
+    axis.ticks = element_line(),
+    # Length of the axis ticks
+    axis.ticks.length = unit(),
+    # Axis lines
+    axis.line = element_line(),
+    # Position of the legend 
+    legend.position = "",
+    # Orientation of the legend
+    legend.direction = "",
+    # Alignment of the legend within the area defined by 'legend.position'
+    legend.justification = "",
+    # Legend key background
+    legend.key = element_rect(),
+    # Height and width of legend key 
+    legend.key.size = unit(),
+    legend.key.height = unit(),
+    legend.key.width = unit(),
+    # Legend text elements
+    legend.text = element_text(),
+    # Legend title 
+    legend.title = element_text(),
+    # Legend background
+    legend.background = element_rect(),
+    # Legend box layout
+    legend.box = "",
+    # Panel background
+    panel.background = element_rect(),
+    # Panel border
+    panel.border = element_rect(),
+    # Major and minor grid lines within panels
+    panel.grid.major = element_line(),
+    panel.grid.minor = element_line(),
+    # Spacing around panels
+    panel.spacing = unit(),
+    # If TRUE, the panels will be on top of the strips
+    panel.ontop = FALSE,
+    # Background of strip labels
+    strip.background = element_rect(),
+    # Strip text elements
+    strip.text = element_text(),
+    strip.text.x = element_text(),
+    strip.text.y = element_text(),
+    # Margins around the entire plot, strip labels, legend, panels, and axes
+    plot.margin = margin(),
+    strip.margin = margin(),
+    legend.margin = margin(),
+    panel.margin = margin(),
+    axis.margin = margin(),
+    # Plot background
+    plot.background = element_rect(),
+    # Plot tag
+    plot.tag = element_text(),
+    # Position of the plot tag
+    plot.tag.position = "",
+    # If TRUE, all missing elements are filled in with the default theme elements
+    complete = FALSE))
+
 
 
 snippet age_pyramid
