@@ -12,7 +12,7 @@ snippet help
 
 	<!-- Documentation about functions, operators or some other topic -->
 	?
-	??b
+	??
 	compare-r-syntax
 
 	<!-- END: Help snippets -->
@@ -201,10 +201,12 @@ snippet refv
 	\@ref(cor:${1:video-ID})
 # R Markdown syntax: chunks  --------------------------------------------------
 snippet r
-	`r `
+	```{r${1}}
+	${0}
+	```
 
 snippet rr
-	```{r${1}}
+	```{r ${1:label}, ${2:options}}
 	${0}
 	```
 
