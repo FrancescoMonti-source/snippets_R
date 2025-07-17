@@ -456,6 +456,10 @@ snippet opts-chunk
 	  fig.align  = "center" # Default alignment for plots in knitted documents.
 	)
 	${0}
+	
+snippet set_plot_size
+	options(repr.plot.width = 16, repr.plot.height = 12)
+
 # FIXME: this part (options) must be carefully reviewed
 # Options --------------------------------------------------------------------
 snippet help-lib

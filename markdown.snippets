@@ -1081,6 +1081,9 @@ snippet [
 snippet ![
 	![${1:label}](${2:location})
 
+snippet set_plot_size
+	options(repr.plot.width = 16, repr.plot.height = 12)
+
 snippet plot
 	```{r ${1:fig-ID-`r paste0(round(as.integer(Sys.time())), "-", sample(0:999, 1))`}, echo=FALSE, fig.cap=caption}
 	# Caption/Description.
