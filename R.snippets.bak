@@ -303,12 +303,59 @@ snippet map_
 	${1:purrr::}map_${2:chr}(${3:data}, ${4:function})
 
 snippet datatable
-	datatable(options = list(
-		pageLength = 10,
-		scrollX = TRUE,
-		width = "auto",
-		scrollX = T)
-		)
+	  # vignette("DT", package = "DT")
+	
+	  DT::datatable(
+	    data = ${1:data_frame},
+	    caption = tags\$caption(
+	      style = "caption-side: top; text-align: left; font-size: 18px; font-weight: bold; padding: 10px;",
+	      ${2:caption_text}
+	    ),
+	    extensions = c("Buttons", "RowGroup", "FixedHeader"),
+	    rownames = FALSE,
+	    options = list(
+	      pageLength     = 10,
+	      lengthMenu     = list(c(10, 25, 50, -1), c(10, 25, 50, "All")),
+	      scrollX        = TRUE,
+	      scrollY        = "400px",
+	      scrollCollapse = TRUE,
+	      fixedHeader    = TRUE,
+	      dom            = "Blfrtip",
+	      buttons        = list(
+	        "copy",
+	        list(extend = "excel", filename = ${2:caption_text})
+	      ),
+	      rowGroup = list(
+	        dataSrc = match(${3:group_col}, names(${1:data_frame}))
+	      ),
+	      columnDefs = list(
+	        list(
+	          visible = FALSE,
+	          targets = match(${3:group_col}, names(${1:data_frame}))
+	        ),
+	        list(
+	          className = "dt-right",
+	          targets = na.omit(match(
+	            names(${1:data_frame})[sapply(${1:data_frame}, is.numeric)],
+	            names(${1:data_frame})
+	          ))
+	        )
+	      ),
+	      order = list(list(1, 'asc'))
+	    )
+	  ) |>
+	  DT::formatRound(
+	    columns = names(${1:data_frame})[sapply(${1:data_frame}, is.numeric)],
+	    digits = 2
+	  ) |>
+	  DT::formatStyle(
+	    columns = names(${1:data_frame}),
+	    text-align = "right"
+	  )
+
+
+
+
 
 snippet pipe-
 	$$ <-
@@ -387,6 +434,30 @@ snippet help-opts
 	opts-pander
 	opts-desctools
 
+snippet opts-dt
+  options = list(
+    pageLength     = ${1:10},
+    lengthMenu     = list(c(10, 25, 50, -1), c(10, 25, 50, "All")),
+    scrollX        = TRUE,
+    scrollY        = "400px",
+    scrollCollapse = TRUE,
+    autoWidth      = TRUE,
+    fixedHeader    = TRUE,
+    dom            = "Blfrtip",  # Buttons, length menu, filter, table, info, pager
+    buttons        = list(
+      "copy",
+      list(extend = "excel", filename = ${2:caption_text})
+    ),
+    rowGroup       = list(
+      dataSrc = match(${3:group_col}, names(${4:data_frame}))
+    ),
+    columnDefs = list(
+      list(className = "dt-right", targets = match(${5:num_cols}, names(${4:data_frame})))
+    ),
+    order = list(list(${6:1}, 'asc'))
+  )
+
+
 snippet opts-r-numbers
 	# Options to format numbers
 	options(        # For more detais see ?options
@@ -456,6 +527,10 @@ snippet opts-chunk
 	  fig.align  = "center" # Default alignment for plots in knitted documents.
 	)
 	${0}
+	
+snippet set_plot_size
+	options(repr.plot.width = 16, repr.plot.height = 12)
+
 # FIXME: this part (options) must be carefully reviewed
 # Options --------------------------------------------------------------------
 snippet help-lib
@@ -753,17 +828,15 @@ snippet set_global_ggplot_theme
 
 
 snippet age_pyramid
-	tab = data %>% select(age,gender) 
-	
-	ggplot(data = tab, aes(x=factor(age),fill=gender))+
-	geom_bar(data=subset(tab, tab$gender=="F"), position = "identity")+
-	geom_bar(data=subset(tab, tab$gender=="M"), aes(y=after_stat(count)*(-1)))+
-	scale_y_continuous(breaks=seq(-1000,1000,50))+ 
-	coord_flip()+
-	labs(title = "Age pyramid",
-	fill = "Gender",
-	y = "Age",
-	x = "Count")}
+	tab = data %>% 
+			select(age,sexe) %>%
+			mutate(age = cut(as.numeric(age),
+				   breaks = seq(1,20,1))) %>%
+			count(age, sexe, name = "count")
+
+	ggplot(data = tab, aes(x = age,y = ifelse(sexe == "F", -count, count), fill = sexe))+
+		geom_bar(stat = "identity", position = "identity")+
+		coord_flip()
 	
 snippet ggplotmeans
 	%>% 
