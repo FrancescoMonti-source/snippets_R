@@ -325,6 +325,12 @@ snippet datatable
 	        "copy",
 	        list(extend = "excel", filename = ${2:caption_text})
 	      ),
+		  # ── make ALL headers bold and x-aligned ─────────────────────────────
+		  initComplete = JS(
+            "function(settings, json) {",
+            "  $(this.api().table().header()).css({'font-weight':'bold','text-align':'right'});",
+            "}"
+          ),
 	      rowGroup = list(
 	        dataSrc = match(${3:group_col}, names(${1:data_frame}))
 	      ),
@@ -347,14 +353,11 @@ snippet datatable
 	  DT::formatRound(
 	    columns = names(${1:data_frame})[sapply(${1:data_frame}, is.numeric)],
 	    digits = 2
-	  ) |>
-	  DT::formatStyle(
-	    columns = names(${1:data_frame}),
-	    text-align = "right"
-	  )
-
-
-
+	  ) #|>
+	  #DT::formatStyle(
+	  #  columns = names(${1:data_frame}),
+	  #  text-align = "right"
+	  #)
 
 
 snippet pipe-

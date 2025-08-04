@@ -325,6 +325,12 @@ snippet datatable
 	        "copy",
 	        list(extend = "excel", filename = ${2:caption_text})
 	      ),
+		  # ── make ALL headers bold and x-aligned ─────────────────────────────
+		  initComplete = JS(
+            "function(settings, json) {",
+            "  $(this.api().table().header()).css({'font-weight':'bold','text-align':'right'});",
+            "}"
+          ),
 	      rowGroup = list(
 	        dataSrc = match(${3:group_col}, names(${1:data_frame}))
 	      ),
@@ -435,27 +441,121 @@ snippet help-opts
 	opts-desctools
 
 snippet opts-dt
+  # Common DT::datatable options (you can copy-paste as needed)
   options = list(
-    pageLength     = ${1:10},
-    lengthMenu     = list(c(10, 25, 50, -1), c(10, 25, 50, "All")),
-    scrollX        = TRUE,
-    scrollY        = "400px",
-    scrollCollapse = TRUE,
-    autoWidth      = TRUE,
-    fixedHeader    = TRUE,
-    dom            = "Blfrtip",  # Buttons, length menu, filter, table, info, pager
+  
+    ## 🔢 Pagination
+    pageLength     = 10,                                     # rows per page on load
+    lengthMenu     = list(c(10, 25, 50, -1), c(10, 25, 50, "All")),  # show dropdown for entries
+    
+    ## 🔁 Scrolling
+    scrollX        = TRUE,                                   # horizontal scroll
+    scrollY        = "400px",                                # vertical scroll with fixed height
+    scrollCollapse = TRUE,                                   # collapse to content height
+    
+    ## 📌 Layout + buttons
+    dom            = "Blfrtip",                              # layout of controls: Buttons, length, filter, table, info, pager
     buttons        = list(
       "copy",
-      list(extend = "excel", filename = ${2:caption_text})
+      list(extend = "excel", filename = "table_export")
+      # "csv", "pdf", "print" also available
     ),
-    rowGroup       = list(
-      dataSrc = match(${3:group_col}, names(${4:data_frame}))
-    ),
+    
+    ## 🧱 Column definitions
     columnDefs = list(
-      list(className = "dt-right", targets = match(${5:num_cols}, names(${4:data_frame})))
+      list(visible = FALSE, targets = 0),                    # hide first column
+      list(orderable = FALSE, targets = 1),                  # make second column unsortable
+      list(className = "dt-center", targets = 2),            # center-align third column
+      list(className = "dt-right",  targets = c(3, 4)),      # right-align columns 4 and 5
+      list(width = "100px", targets = 5)                     # set fixed width
     ),
-    order = list(list(${6:1}, 'asc'))
+    
+    ## 🔡 Initial ordering
+    order = list(list(1, 'asc')),                            # sort by column 2 (index 1), ascending
+    
+    ## 📂 Row grouping (optional)
+    rowGroup = list(dataSrc = 1),                            # group rows by column index (1-based in R)
+    # rowGroup = list(dataSrc = c(1, 2))                     # multi-column grouping
+    
+    ## 📎 Other options
+    fixedHeader = TRUE,                                      # fix header on scroll
+    autoWidth   = TRUE,                                      # auto-calculate column widths
+    deferRender = TRUE,                                      # improve performance with large tables
+    searching   = TRUE,                                      # global search box (default TRUE)
+    paging      = TRUE,                                      # enable pagination (default TRUE)
+    info        = TRUE                                       # show "Showing 1 to 10 of X" (default TRUE)
   )
+
+
+
+snippet opts-dt-formatstyle
+  # Common DT::formatStyle() and format helpers
+  
+  ## 🎯 Apply style to column(s)
+  DT::formatStyle(
+    columns = "score",                         # or c("col1", "col2")
+    backgroundColor = styleInterval(
+      c(50, 80),                               # breakpoints
+      c("red", "orange", "green")              # colors
+    ),
+    fontWeight = styleEqual(c("High"), c("bold")),
+    `text-align` = "right"
+  )
+  
+  ## 💰 Format as currency
+  DT::formatCurrency(
+    columns = "amount",                        # numeric col(s)
+    currency = "€",                            # or "$", "£", "CHF"
+    digits = 0,
+    before = TRUE                              # €100 or 100€
+  )
+  
+  ## 📉 Format with % symbol
+  DT::formatPercentage(
+    columns = "rate",
+    digits = 1
+  )
+  
+  ## 🔢 Format numbers with commas
+  DT::formatNumber(
+    columns = c("total", "score"),
+    digits = 2,
+    mark = ","                                 # thousands separator
+  )
+
+snippet opts-dt-columndefs
+  # columnDefs advanced tricks (targets = 0-based column index)
+  columnDefs = list(
+    
+    ## ❌ Hide a column
+    list(visible = FALSE, targets = 0),
+    
+    ## 🚫 Disable sorting on specific column
+    list(orderable = FALSE, targets = 1),
+    
+    ## ➕ Add right-align class
+    list(className = "dt-right", targets = c(2, 3)),
+    
+    ## ✨ Center column content
+    list(className = "dt-center", targets = 4),
+    
+    ## 🔠 Force text wrapping
+    list(className = "text-wrap", targets = 5),
+    
+    ## 📏 Set column width
+    list(width = "120px", targets = 6),
+    
+    ## 🌈 Conditional class (via createdCell JS hook — advanced)
+    list(
+      targets = 7,
+      createdCell = JS(
+        "function(td, cellData) {",
+        "  if (cellData > 1000) $(td).css('color', 'red');",
+        "}"
+      )
+    )
+  )
+
 
 
 snippet opts-r-numbers
